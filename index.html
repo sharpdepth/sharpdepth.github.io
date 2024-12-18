@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="SharpDepth: Sharpening Metric Depth Predictions Using Diffusion Distillation">
+  <meta name="keywords" content="depth, estimation, monocular, scene, reconstruction">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:image:src" content="http://marigoldmonodepth.github.io/images/marigold_logo_square.jpg">
+  <meta name="twitter:title" content="SharpDepth">
+  <meta name="twitter:description" content="SharpDepth: Sharpening Metric Depth Predictions Using Diffusion Distillation">
+  <meta name="twitter:creator" content="@AntonObukhov1">
+
+  <title>SharpDepth: Sharpening Metric Depth Predictions Using Diffusion Distillation</title>
+
+  <!-- Google tag (gtag.js) -->
+  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-1FWSVCGZTG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-1FWSVCGZTG');
+  </script>
+ -->
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/bulma.min.css">
+  <link rel="stylesheet" href="./css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./css/twentytwenty.css">
+  <link rel="stylesheet" href="./css/index.css">
+  <link rel="icon" href="./images/favicon.svg">
+
+  <script src="./js/jquery-3.2.1.min.js"></script>
+  <script src="./js/jquery.event.move.js"></script>
+  <script src="./js/jquery.twentytwenty.js"></script>
+  <script src="./js/bulma-carousel.min.js"></script>
+  <script src="./js/bulma-slider.min.js"></script>
+  <script src="./js/fontawesome.all.min.js"></script>
+
+  <!--MathJax-->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">SharpDepth: Sharpening Metric Depth Predictions Using Diffusion Distillation</h1>
+          <h3 class="title has-text-centered">arXiv 2024</h3>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="http://www.kebingxin.com/" target="_blank" rel="noopener noreferrer">
+                Duc-Hai Pham</a><sup>*1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://www.obukhov.ai" target="_blank" rel="noopener noreferrer">
+                Tung Do</a><sup>*1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://shengyuh.github.io/" target="_blank" rel="noopener noreferrer">
+                Phong Nguyen</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://nandometzger.github.io/" target="_blank" rel="noopener noreferrer">
+                Binh-Son Hua</a><sup>1,2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://rcdaudt.github.io/" target="_blank" rel="noopener noreferrer">
+                Khoi Nguyen</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=FZuNgqIAAAAJ&hl=en" target="_blank" rel="noopener noreferrer">
+                Rang Nguyen</a><sup>1</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"> <sup>1</sup> VinAI Research, Vietnam <sup>2</sup> Trinity College Dublin </span>
+            <span class="eql-cntrb"><small><br><sup>*</sup>Indicates Equal Contribution</small></span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="https://drive.google.com/file/d/1MG4-d_xDERVBCRfLDolNLnMLLuqd7qRz/" target="_blank" rel="noopener noreferrer"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf" style="color: orangered"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <!-- <span class="link-block">
+                <a href="https://github.com/prs-eth/marigold" target="_blank" rel="noopener noreferrer"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>
+                    Code:
+                  </span>
+                  <img
+                          src="https://img.shields.io/github/stars/prs-eth/marigold?style=for-the-badge&label=&color=333333&labelColor=333333" alt="GitHub stars"
+                          style="margin-top: 3px;"
+                  >
+                  <span>
+                    stars
+                  </span>
+                </a>
+              </span> -->
+              <!-- Hugging Face Space (LCM). -->
+              <!-- <span class="link-block">
+                <a href="https://huggingface.co/spaces/prs-eth/marigold-lcm" target="_blank" rel="noopener noreferrer"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      &#129303;
+                  </span>
+                  <span>Interactive Demo (LCM)</span>
+                </a>
+              </span> -->
+              <!-- Hugging Face (diffusers). -->
+              <!-- <span class="link-block">
+                <a href="https://huggingface.co/docs/diffusers/using-diffusers/marigold_usage" target="_blank" rel="noopener noreferrer"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon" style="background-color: white; border-radius: 50%;">
+                      🧨
+                  </span>
+                  <span>&nbsp;Diffusers Tutorial</span>
+                </a>
+              </span> -->
+              <!-- Colab Link. -->
+              <!-- <span class="link-block">
+                <a href="https://colab.research.google.com/drive/12G8reD13DdpMie5ZQlaFNo2WCGeNUH-u?usp=sharing" target="_blank" rel="noopener noreferrer"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                    <img src="images/colab.svg">
+                  </span>
+                  <span>&nbsp;Google Colab</span>
+                </a>
+              </span> -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <img id="teaser" width="100%" src="./images/Depth-teaser.svg" alt="Teaser image demonstrating Marigold depth estimation."/>
+      <h2 class="subtitle has-text-centered">
+        <span class="methodname">SharpDepth</span> bridges metric accuracy with detailed boundary preservation, resulting in depth predictions that are both metrically precise and visually sharp.
+      </h2>
+    </div>
+  </div>
+</section>
+
+
+<!-- Teaser video-->
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <h2 class="title has-text-centered is-3">Video Demonstration</h2>
+      <video poster="" id="tree" autoplay controls muted loop height="100%">
+        <!-- Your video here -->
+        <source src="images/outside.mp4"
+        type="video/mp4">
+      </video>
+      <h2 class="subtitle has-text-centered">
+        Aliquam vitae elit ullamcorper tellus egestas pellentesque. Ut lacus tellus, maximus vel lectus at, placerat pretium mi. Maecenas dignissim tincidunt vestibulum. Sed consequat hendrerit nisl ut maximus. 
+      </h2>
+    </div>
+  </div>
+</section>
+<!-- End teaser video -->
+
+
+<section class="section pt-0">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Overview</h2>
+        <div class="content has-text-justified">
+          <p>
+            We present SharpDepth, a diffusion-based depth model for refining metric depth estimators, e.g., UniDepth, without relying
+            on ground-truth depth data. Our method can recover sharp details in thin structures and improve overall point cloud quality.
+          </p>
+
+          <p>
+            The gallery below presents several images from the internet and a comparison of <span class="methodname">SharpDepth</span> with the previous
+            state-of-the-art metric depth like UniDepth. Use the slider and gestures to reveal details on both sides.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+  </div>
+</section>
+
+
+<section class="section pt-0 pb-4">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Gallery</h2>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero is-light is-small mt-4">
+  <div class="hero-body">
+    <div class="container">
+      <div id="results-carousel-horizontal" class="carousel results-carousel">
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Bee_Collecting_Pollen_2004-08-14.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Bee_Collecting_Pollen_2004-08-14_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Bee_Collecting_Pollen_2004-08-14_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Bee_Collecting_Pollen_2004-08-14_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_20190728_112601_178_720_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_20190728_112601_178_720_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_20190728_112601_178_720_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_20190728_112601_178_720_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/flowers-4430651_1280_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/flowers-4430651_1280_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/flowers-4430651_1280_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/flowers-4430651_1280_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/PIXNIO-2941099-1344x896_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/PIXNIO-2941099-1344x896_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/PIXNIO-2941099-1344x896_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/PIXNIO-2941099-1344x896_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_8330_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_8330_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_8330_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_8330_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/CatLoki2_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/CatLoki2_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/CatLoki2_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/CatLoki2_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/dalle_3_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/dalle_3_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/dalle_3_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/dalle_3_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Lincoln_Cathedral_Chapter_House.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Lincoln_Cathedral_Chapter_House_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Lincoln_Cathedral_Chapter_House_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Lincoln_Cathedral_Chapter_House_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Marianische_Männerkongregation_Munich_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Marianische_Männerkongregation_Munich_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Marianische_Männerkongregation_Munich_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Marianische_Männerkongregation_Munich_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_20190728_112611_045_720_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_20190728_112611_045_720_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_20190728_112611_045_720_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_20190728_112611_045_720_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/PIA15279_3rovers-stand_D2011_1215_D521_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/PIA15279_3rovers-stand_D2011_1215_D521_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/PIA15279_3rovers-stand_D2011_1215_D521_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/PIA15279_3rovers-stand_D2011_1215_D521_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/STS_114_day_before_launch_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/STS_114_day_before_launch_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/STS_114_day_before_launch_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/STS_114_day_before_launch_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Cucurbita_2011_G1.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Cucurbita_2011_G1_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Cucurbita_2011_G1_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Cucurbita_2011_G1_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/USS_Bunker_Hill_hit_by_two_Kamikazes_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/USS_Bunker_Hill_hit_by_two_Kamikazes_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/USS_Bunker_Hill_hit_by_two_Kamikazes_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/USS_Bunker_Hill_hit_by_two_Kamikazes_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG1284_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG1284_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG1284_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG1284_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17527_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17527_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17527_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17527_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/woodland_path_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/woodland_path_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/woodland_path_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/woodland_path_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero is-light is-small">
+  <div class="hero-body pt-0">
+    <div class="container">
+      <div id="results-carousel-vertical" class="carousel results-carousel">
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/8A10BC4E-4963-4885-8F30-8B28F3F8AB2B-78098-0000351063D6ECE7_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/8A10BC4E-4963-4885-8F30-8B28F3F8AB2B-78098-0000351063D6ECE7_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/8A10BC4E-4963-4885-8F30-8B28F3F8AB2B-78098-0000351063D6ECE7_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/8A10BC4E-4963-4885-8F30-8B28F3F8AB2B-78098-0000351063D6ECE7_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DJI_0189_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DJI_0189_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DJI_0189_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DJI_0189_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DJI_0221-HDR_crop_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DJI_0221-HDR_crop_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DJI_0221-HDR_crop_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DJI_0221-HDR_crop_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC00058-HDR_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC00058-HDR_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC00058-HDR_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC00058-HDR_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC01162_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC01162_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC01162_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC01162_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC00152-HDR_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC00152-HDR_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC00152-HDR_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/DSC00152-HDR_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG-20231111-WA0001.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG-20231111-WA0001_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG-20231111-WA0001_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG-20231111-WA0001_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_0810_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_0810_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_0810_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/img_0810_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_7860-Edit_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_7860-Edit_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_7860-Edit_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_7860-Edit_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230223_201232.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230223_201232_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230223_201232_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230223_201232_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230531_162636.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230531_162636_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230531_162636_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230531_162636_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230818_201603.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230818_201603_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230818_201603_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/IMG_20230818_201603_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/marigold-4549334_1280.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/marigold-4549334_1280_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/marigold-4549334_1280_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/marigold-4549334_1280_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/pete-walls-92JRuvQZfKs-unsplash_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/pete-walls-92JRuvQZfKs-unsplash_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/pete-walls-92JRuvQZfKs-unsplash_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/pete-walls-92JRuvQZfKs-unsplash_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/S-IC_engines_and_Von_Braun_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/S-IC_engines_and_Von_Braun_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/S-IC_engines_and_Von_Braun_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/S-IC_engines_and_Von_Braun_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Ticino_crop43.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Ticino_crop43_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Ticino_crop43_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/Ticino_crop43_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG1282.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG1282_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG1282_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG1282_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17503.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17503_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17503_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17503_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+        <div class="twoitem">
+          <div class="twentytwenty-container twentytwenty-container-top">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17509.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17509_ours.jpg">
+            </div>
+          </div>
+          <div class="twentytwenty-container twentytwenty-container-bottom">
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17509_leres.jpg">
+            </div>
+            <div class="cmpcontent">
+              <img src="./images/inthewild/WechatIMG17509_ours.jpg">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Method. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">How it works</h2>
+        <div class="content has-text-justified">
+          <h3 class="title has-text-centered">
+            Fine-tuning protocol
+          </h3>
+
+          <p>
+            $\newcommand{\img}{\mI}
+            \newcommand{\depth}{\mathbf{d}}
+            \newcommand{\latent}{z_{i}}
+            \newcommand{\latentdepth}{z_{d}}
+            
+            \newcommand{\discrilatentdepth}{z^{\tilde{d}_{\text{norm}}}}
+            \newcommand{\discridepth}{d}
+            \newcommand{\genedepth}{\tilde{d}}
+            \newcommand{\discridepthmetric}{\tilde{d}_{\text{metric}}}
+            
+            \newcommand{\blendedlatent}{z^\prime_{d}}
+            \newcommand{\metriclatent}{z_{d}}
+            
+            \newcommand{\predlatentdepth}{\hat{z}}
+            \newcommand{\initlatentdepth}{z^{\hat{d}_{\text{init-norm}}}}
+            
+            \newcommand{\preddepth}{\hat{d}}
+            \newcommand{\initdepth}{d_{\text{init}}}
+            
+            \newcommand{\latentimage}{z^{\mI}}
+            
+            \newcommand{\noise}{\bm{\epsilon}}
+            \newcommand{\denoiser}{\bm{\epsilon}_{\theta}}
+            \newcommand{\denoiserlong}{\denoiser(\latentdepth_t, \latentimage, t)}
+            \newcommand{\catinput}{\mathbf{z}}
+            
+            
+            \newcommand{\encoder}{\mathcal{E}}
+            \newcommand{\decoder}{\mathcal{D}}
+            
+            \newcommand{\discri}{f_D}
+            \newcommand{\genera}{f_G}
+            
+            \newcommand{\refiner}{G_\theta}
+            \newcommand{\refinerema}{G_{\bar{\theta}}}
+            $
+            Given an input image $I$, we first use both 
+            pre-trained metric depth model $f_D$ and diffusion-based depth model $\genera$
+            to produce metric and affine-invariant depth output $\discridepth$ and $\genedepth$, respectively. 
+            Our goal is to generate a sharpened metric depth map, $\preddepth$, using our proposed sharpening model, $\refiner$. This model architecture is based on state-of-the-art pre-trained depth diffusion models.
+            Instead of naively relying on the forward process of diffusion model, we introduce a Noise-aware Gating mechanism, which provides explicit guidance to the sharpener $\refiner$ on uncertain regions. To enable ground-truth free fine-tuning, we use SDS loss to distill fine-grained details from the pretrained diffusion depth model $\genera$ and Noise-Aware Reconstruction Loss to ensure accurate metric prediction.
+          </p>
+
+          <img id="method_train" width="100%" src="./images/Depth-pipeline_crop-1.png" alt="SharpDepth training scheme"/>
+
+          <!-- <h3 class="title has-text-centered">
+            Inference scheme
+          </h3>
+
+          <p>
+            Given an input image $x$, we encode it with the original Stable Diffusion VAE into the latent code $z^{(x)}$,
+            and concatenate with the depth latent $z^{(d)}_t$ before giving it to the modified fine-tuned U-Net on every denoising iteration.
+            After executing the schedule of $T$ steps, the resulting depth latent $z^{(d)}_0$ is decoded into
+            an image, whose 3 channels are averaged to get the final estimation $\hat d$.
+          </p>
+ -->
+          <!-- <img id="method_inference" width="100%" src="./images/method_inference_compressed.jpg" alt="Marigold inference scheme"/> -->
+
+          <h3 class="title has-text-centered">
+            Comparison with other methods
+          </h3>
+
+          <p>
+            Quantitative comparison of <span class="methodname">SharpDepth</span> with SOTA metric depth estimators
+            on several zero-shot benchmarks. Our method achieves accuracy comparable to metric depth models.
+            Further evaluation on synthetic datasets (Sintel, UnrealStereo, and Spring) and a real dataset (iBims) shows that our method significantly outperforms UniDepth in both edge accuracy and completeness. By leveraging priors from the pre-trained diffusion model, our approach produces sharper depth discontinuities and achieves high accuracy across datasets. 
+            In contrast, discriminative-based methods often produce overly smooth edges, leading to higher completeness errors.
+          </p>
+
+          <img id="comparison" width="100%" src="./images/quantitative_1.png" alt="Comparison with other methods"/>
+          
+          <img id="comparison" width="100%" src="./images/quantitative_2.png" alt="Comparison with other methods"/>
+
+          <!-- <p class="subtitle mt-5">
+            Refer to the pdf paper linked above for more details on qualitative, quantitative, and ablation studies.
+          </p> -->
+        </div>
+
+      </div>
+    </div>
+    <!--/ Method. -->
+  </div>
+</section>
+
+
+<script>
+  $(window).on('load', function() {
+    bulmaCarousel.attach('#results-carousel-horizontal', {
+      slidesToScroll: 1,
+      slidesToShow: 3,
+      loop: true,
+      autoplay: true,
+    });
+
+    bulmaCarousel.attach('#results-carousel-vertical', {
+      slidesToScroll: 1,
+      slidesToShow: 5,
+      loop: true,
+      autoplay: true,
+    });
+
+    bulmaCarousel.attach('#results-carousel-testimonials', {
+      slidesToScroll: 1,
+      slidesToShow: 3,
+      loop: true,
+      autoplay: true,
+      breakpoints: [
+        {
+          changePoint: 50 + 260 * 2,
+          slidesToShow: 1,
+          slidesToScroll: 1,
+          loop: true,
+          autoplay: true,
+        },
+        {
+          changePoint: 50 + 260 * 3,
+          slidesToShow: 2,
+          slidesToScroll: 1,
+          loop: true,
+          autoplay: true,
+        },
+        {
+          changePoint: 50 + 260 * 4,
+          slidesToShow: 3,
+          slidesToScroll: 1,
+          loop: true,
+          autoplay: true,
+        }
+      ],
+    });
+
+    $(".twentytwenty-container-top").twentytwenty({
+      before_label: 'Input',
+      after_label: 'Ours',
+      default_offset_pct: 0.75,
+    });
+
+    $(".twentytwenty-container-bottom").twentytwenty({
+      before_label: 'UniDepth',
+      after_label: 'Ours',
+      default_offset_pct: 0.5,
+    });
+
+    $('.results-carousel').css({
+      'max-height': '2000px',
+      'visibility': 'visible'
+    });
+  });
+</script>
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">Citation</h2>
+    <pre class="selectable"><code>
+      @article{pham2024sharpdepth,
+        title={SharpDepth: Sharpening Metric Depth Predictions Using Diffusion Distillation},
+        author={Pham, Duc-Hai and Do, Tung and Nguyen, Phong and Hua, Binh-Son and Nguyen, Khoi and Nguyen, Rang},
+        journal={arXiv preprint arXiv:2411.18229},
+        year={2024}
+      }
+  </code></pre>
+  </div>
+</section>
+
+<footer class="footer pt-4 pb-0">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            Website template based on
+            <a href="https://github.com/nerfies/nerfies.github.io">
+              Nerfies
+            </a>
+            and licensed under
+            <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+              CC-BY-SA-4.0
+            </a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
